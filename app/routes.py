@@ -5,13 +5,10 @@ from __future__ import annotations
 from typing import Any
 
 from flask import Blueprint, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 
+from app import db
 from app.models import Data
-
-# Create SQLAlchemy instance for type checking
-db = SQLAlchemy()
 
 data_routes = Blueprint("data_routes", __name__)
 

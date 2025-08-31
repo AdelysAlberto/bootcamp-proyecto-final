@@ -4,14 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Mapped, mapped_column
 
 if TYPE_CHECKING:
-    from flask_sqlalchemy import SQLAlchemy
+    pass
 
-# Create SQLAlchemy instance
-db = SQLAlchemy()
+from app import db
 
 
 class Data(db.Model):  # type: ignore
