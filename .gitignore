@@ -48,6 +48,10 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+coverage_report.md
+.pytest_results/
+test_results/
+test-reports/
 
 # Translations
 *.mo
