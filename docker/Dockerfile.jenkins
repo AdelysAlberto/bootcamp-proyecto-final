@@ -1,0 +1,31 @@
+FROM jenkins/jenkins:lts
+
+# Switch to root user to install additional packages
+USER root
+
+# Install basic tools and Python
+RUN apt-get update && \
+    apt-get install -y \
+    curl \
+    wget \
+    git \
+    python3 \
+    python3-pip \
+    python3-venv \
+    build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+# Switch back to jenkins user
+USER jenkins
+
+# Skip plugin installation for faster builds
+# Plugins can be installed later through the Jenkins UI
+
+# Expose Jenkins ports
+EXPOSE 8080
+EXPOSE 50000
+
+# Set Jenkins home
+ENV JENKINS_HOME=/var/jenkins_home
+
+# The jenkins image already has the correct entrypoint

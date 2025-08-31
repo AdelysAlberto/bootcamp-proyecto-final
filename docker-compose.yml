@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.postgres
+    container_name: postgres
+    environment:
+      POSTGRES_DB: reto_final_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - reto_final_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Jenkins CI/CD
+  jenkins:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.jenkins
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      # Mount Docker socket to allow Jenkins to control Docker from the host
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - reto_final_network
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+
+  # Python Flask Application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: python
+    environment:
+      FLASK_ENV: development
+      DATABASE_URI: postgresql://postgres:postgres123@postgres:5432/reto_final_db
+      SECRET_KEY: your_super_secret_key_change_in_production
+    ports:
+      - "5001:5000"
+    volumes:
+      - .:/app
+    networks:
+      - reto_final_network
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  reto_final_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  jenkins_home:
+    driver: local
