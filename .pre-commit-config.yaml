@@ -19,8 +19,6 @@ repos:
     rev: 24.8.0
     hooks:
       - id: black
-        # Remover language_version para usar Python del sistema
-        # language_version: python3.11
 
   # Ruff - Linter and formatter
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -39,22 +37,8 @@ repos:
         args: [--strict, --ignore-missing-imports]
         # Remover language_version para usar Python del sistema
 
-  # Docker-related checks
   - repo: https://github.com/hadolint/hadolint
     rev: v2.12.0
     hooks:
       - id: hadolint-docker
         args: [--ignore, DL3008, --ignore, DL3009]
-
-  # Security checks - Temporarily disabled due to dependency issues
-  # - repo: https://github.com/PyCQA/bandit
-  #   rev: 1.7.5
-  #   hooks:
-  #     - id: bandit
-  #       args: ['-r', '.', '-x', 'tests/']
-
-  # Dependency security checks - Temporarily disabled due to dependency issues
-  # - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
-  #   rev: v1.3.2
-  #   hooks:
-  #     - id: python-safety-dependencies-check
