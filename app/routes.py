@@ -1,57 +1,83 @@
-from flask import Blueprint, request, jsonify
+"""API routes for the application."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from flask import Blueprint, jsonify, request
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
+
 from app.models import Data
-from app import db
+
+# Create SQLAlchemy instance for type checking
+db = SQLAlchemy()
 
 data_routes = Blueprint("data_routes", __name__)
 
 
 @data_routes.route("/data", methods=["POST"])
-def insert_data():
-    data = request.json  # Assuming JSON data is sent for insertion
-    new_data = Data(name=data.get("name"))
+def insert_data() -> tuple[dict[str, str], int]:
+    """Insert new data into the database."""
+    data: dict[str, Any] = request.json or {}
+    name = data.get("name")
 
-    current_data = Data.query.filter_by(name=data.get("name")).first()
+    if not name:
+        return {"message": "Name is required"}, 400
+
+    # Check if data already exists
+    current_data = Data.query.filter_by(name=name).first()
     if current_data:
         return {"message": "Data already exists"}, 409
 
+    # Create new data entry
+    new_data = Data(name=name)
     db.session.add(new_data)
     db.session.commit()
-    return jsonify({"message": "Data inserted successfully"})
+
+    return {"message": "Data inserted successfully"}, 201
 
 
 @data_routes.route("/data", methods=["GET"])
-def get_all_data():
-    data_list = [{"id": data.id, "name": data.name} for data in Data.query.all()]
+def get_all_data() -> Any:
+    """Get all data from the database."""
+    data_list = [data.to_dict() for data in Data.query.all()]
     return jsonify(data_list)
 
 
-@data_routes.route("/data/<int:id>", methods=["DELETE"])
-def delete_data(id):
-    element_to_delete = Data.query.get(id)
+@data_routes.route("/data/<int:data_id>", methods=["DELETE"])
+def delete_data(data_id: int) -> tuple[dict[str, str], int]:
+    """Delete data by ID."""
+    element_to_delete = Data.query.get(data_id)
     if not element_to_delete:
         return {"message": "Data not found"}, 404
 
     db.session.delete(element_to_delete)
     db.session.commit()
-    return {"message": "Data deleted successfully"}
+    return {"message": "Data deleted successfully"}, 200
 
 
 @data_routes.route("/health", methods=["GET"])
-def health_check():
-    """Health check endpoint for Docker containers"""
+def health_check() -> tuple[dict[str, str], int]:
+    """Health check endpoint for Docker containers."""
     try:
         # Test database connection
-        from sqlalchemy import text
-        db.session.execute(text('SELECT 1'))
-        return jsonify({
-            "status": "healthy",
-            "database": "connected",
-            "service": "reto_final_python"
-        }), 200
+        db.session.execute(text("SELECT 1"))
+        return (
+            {
+                "status": "healthy",
+                "database": "connected",
+                "service": "reto_final_python",
+            },
+            200,
+        )
     except Exception as e:
-        return jsonify({
-            "status": "unhealthy",
-            "database": "disconnected",
-            "service": "reto_final_python",
-            "error": str(e)
-        }), 503
+        return (
+            {
+                "status": "unhealthy",
+                "database": "disconnected",
+                "service": "reto_final_python",
+                "error": str(e),
+            },
+            503,
+        )
