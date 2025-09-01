@@ -29,7 +29,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile.jenkins
     container_name: jenkins
-    user: "1000:999"  # jenkins user with docker group
+    user: "root"  # Ejecutar como root para acceso completo a Docker
     ports:
       - "8080:8080"
       - "50000:50000"
