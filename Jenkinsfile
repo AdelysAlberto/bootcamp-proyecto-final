@@ -382,12 +382,18 @@ pipeline {
 
   post {
     always {
-      // Archive build artifacts
-      archiveArtifacts(
-        artifacts: 'reports/**/*,*.log,*.xml',
-        fingerprint: true,
-        allowEmptyArchive: true
-      )
+      script {
+        // Archive build artifacts
+        try {
+          archiveArtifacts(
+            artifacts: 'reports/**/*,*.log,*.xml',
+            fingerprint: true,
+            allowEmptyArchive: true
+          )
+        } catch (err) {
+          echo "No artifacts to archive: ${err.getMessage()}"
+        }
+      }
 
       // Clean up Docker resources
       sh '''
@@ -397,15 +403,21 @@ pipeline {
       '''
 
       // Clean workspace
-      cleanWs(
-        deleteDirs: true,
-        notFailBuild: true,
-        patterns: [
-          [pattern: 'reports/**', type: 'EXCLUDE'],
-          [pattern: '*.xml', type: 'EXCLUDE'],
-          [pattern: 'htmlcov/**', type: 'EXCLUDE']
-        ]
-      )
+      script {
+        try {
+          cleanWs(
+            deleteDirs: true,
+            notFailBuild: true,
+            patterns: [
+              [pattern: 'reports/**', type: 'EXCLUDE'],
+              [pattern: '*.xml', type: 'EXCLUDE'],
+              [pattern: 'htmlcov/**', type: 'EXCLUDE']
+            ]
+          )
+        } catch (err) {
+          echo "Workspace cleanup failed: ${err.getMessage()}"
+        }
+      }
     }
 
     success {
@@ -414,15 +426,19 @@ pipeline {
           // Notify success for main branch
           echo "✅ Pipeline completed successfully for main branch!"
           echo "🐳 Docker image available: ${IMAGE}:${IMAGE_TAG}"
-          echo "📊 Coverage report: ${BUILD_URL}Coverage_Report/"
+          if (env.BUILD_URL) {
+            echo "📊 Coverage report: ${BUILD_URL}Coverage_Report/"
+          }
         }
       }
     }
 
     failure {
       script {
-        echo "❌ Pipeline failed for branch: ${env.BRANCH_NAME}"
-        echo "📋 Check logs at: ${BUILD_URL}console"
+        echo "❌ Pipeline failed for branch: ${env.BRANCH_NAME ?: 'unknown'}"
+        if (env.BUILD_URL) {
+          echo "📋 Check logs at: ${BUILD_URL}console"
+        }
 
         // Additional cleanup on failure
         sh '''
