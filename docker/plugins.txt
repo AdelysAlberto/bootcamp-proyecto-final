@@ -1,0 +1,15 @@
+# Essential plugins for Docker Pipeline (using latest compatible versions)
+workflow-aggregator
+docker-workflow
+docker-commons
+pipeline-stage-view
+git
+github
+credentials
+credentials-binding
+ssh-credentials
+ansicolor
+timestamper
+ws-cleanup
+build-timeout
+antisamy-markup-formatter
