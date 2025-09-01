@@ -26,17 +26,18 @@ services:
   # Jenkins CI/CD
   jenkins:
     build:
-      context: ./docker
-      dockerfile: Dockerfile.jenkins
+      context: .
+      dockerfile: docker/Dockerfile.jenkins
     container_name: jenkins
+    user: "1000:999"  # jenkins user with docker group
     ports:
       - "8080:8080"
       - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
       # Mount Docker socket to allow Jenkins to control Docker from the host
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /usr/bin/docker:/usr/bin/docker      
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - ./:/workspace:ro
     networks:
       - reto_final_network
     restart: unless-stopped
@@ -45,6 +46,8 @@ services:
         condition: service_healthy
     environment:
       - DOCKER_HOST=unix:///var/run/docker.sock
+      - JENKINS_OPTS=--httpPort=8080
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
 
   # Python Flask Application
   web:
